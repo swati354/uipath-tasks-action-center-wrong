@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useUiPathAssets } from '@/hooks/useUiPathAssets';
+import { useFolderContext } from '@/hooks/useFolderContext';
 import { StatusBadge } from './StatusBadge';
 const getAssetTypeIcon = (valueType: string) => {
   switch (valueType?.toLowerCase()) {
@@ -31,10 +32,11 @@ const getAssetTypeColor = (valueType: string) => {
   }
 };
 export function AssetsTable() {
+  const { selectedFolderId } = useFolderContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [showValues, setShowValues] = useState<Record<string, boolean>>({});
-  const { data: assets, isLoading, error, refetch } = useUiPathAssets(undefined, true);
+  const { data: assets, isLoading, error, refetch } = useUiPathAssets(selectedFolderId, true);
   const filteredAssets = useMemo(() => {
     if (!assets) return [];
     return assets.filter(asset => {
@@ -52,7 +54,7 @@ export function AssetsTable() {
   };
   const formatAssetValue = (asset: any) => {
     if (asset.valueType?.toLowerCase() === 'credential') {
-      return showValues[asset.id.toString()] ? asset.value || '••••••••' : '••••••••';
+      return showValues[asset.id] ? asset.value || '••••••••' : '••••••••';
     }
     if (asset.valueType?.toLowerCase() === 'boolean') {
       return asset.value === 'true' ? 'True' : 'False';
@@ -136,8 +138,8 @@ export function AssetsTable() {
         {filteredAssets.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              {searchTerm || typeFilter !== 'all'
-                ? 'No assets match your filters'
+              {searchTerm || typeFilter !== 'all' 
+                ? 'No assets match your filters' 
                 : 'No assets found. Create assets in UiPath Orchestrator to see them here.'}
             </p>
           </div>
@@ -160,8 +162,8 @@ export function AssetsTable() {
                       {asset.name}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant="outline"
+                      <Badge 
+                        variant="outline" 
                         className={getAssetTypeColor(asset.valueType || 'text')}
                       >
                         <span className="flex items-center space-x-1">
@@ -181,10 +183,10 @@ export function AssetsTable() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => toggleValueVisibility(asset.id.toString())}
+                            onClick={() => toggleValueVisibility(asset.id)}
                             className="h-6 w-6 p-0"
                           >
-                            {showValues[asset.id.toString()] ? (
+                            {showValues[asset.id] ? (
                               <EyeOff className="w-3 h-3" />
                             ) : (
                               <Eye className="w-3 h-3" />
@@ -197,7 +199,7 @@ export function AssetsTable() {
                       {asset.description || 'No description'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <StatusBadge
+                      <StatusBadge 
                         status="success"
                         text="Available"
                       />
