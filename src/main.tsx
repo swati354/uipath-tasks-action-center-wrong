@@ -4,9 +4,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { UiPathAuthProvider } from '@/contexts/UiPathAuthContext';
+import { Toaster } from '@/components/ui/sonner';
 import '@/index.css';
 import { HomePage } from '@/pages/HomePage';
-
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -15,12 +16,14 @@ const queryClient = new QueryClient({
         },
     },
 });
-
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <ErrorBoundary>
             <QueryClientProvider client={queryClient}>
-                <HomePage />
+                <UiPathAuthProvider>
+                    <HomePage />
+                    <Toaster />
+                </UiPathAuthProvider>
             </QueryClientProvider>
         </ErrorBoundary>
     </StrictMode>,

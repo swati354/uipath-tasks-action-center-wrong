@@ -6,12 +6,11 @@
  * - Start a process
  * - Get process by ID
  */
-
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import { getUiPath } from '../lib/uipath';
+import { useUiPathAuth } from '@/contexts/UiPathAuthContext';
 import { toast } from 'sonner';
 import type { ProcessGetResponse, ProcessStartResponse } from 'uipath-sdk';
-
 /**
  * Fetch all UiPath processes
  *
@@ -19,15 +18,14 @@ import type { ProcessGetResponse, ProcessStartResponse } from 'uipath-sdk';
  * @param enabled - Whether to enable the query (default: true)
  */
 export function useUiPathProcesses(folderId?: number, enabled = true): UseQueryResult<ProcessGetResponse[], Error> {
+	const { isAuthenticated } = useUiPathAuth();
 	return useQuery({
 		queryKey: ['uipath', 'processes', folderId],
 		queryFn: async (): Promise<ProcessGetResponse[]> => {
 			const uipath = getUiPath();
-			
 			if (!uipath.isAuthenticated()) {
 				throw new Error('Not authenticated. Please complete the authentication flow.');
 			}
-			
 			const result = await uipath.processes.getAll(
 				folderId ? { folderId } : undefined
 			);
@@ -37,12 +35,11 @@ export function useUiPathProcesses(folderId?: number, enabled = true): UseQueryR
 			}
 			return (result as any).items || [];
 		},
-		enabled: enabled,
+		enabled: enabled && isAuthenticated,
 		staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
 		gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
 	});
 }
-
 /**
  * Get a specific process by ID
  *
@@ -50,24 +47,22 @@ export function useUiPathProcesses(folderId?: number, enabled = true): UseQueryR
  * @param folderId - Required folder ID
  */
 export function useUiPathProcess(processId: number | undefined, folderId: number): UseQueryResult<ProcessGetResponse, Error> {
+	const { isAuthenticated } = useUiPathAuth();
 	return useQuery({
 		queryKey: ['uipath', 'processes', processId, folderId],
 		queryFn: async (): Promise<ProcessGetResponse> => {
 			if (!processId) throw new Error('Process ID is required');
 			const uipath = getUiPath();
-			
 			if (!uipath.isAuthenticated()) {
 				throw new Error('Not authenticated. Please complete the authentication flow.');
 			}
-			
 			return await uipath.processes.getById(processId, folderId);
 		},
-		enabled: !!processId,
+		enabled: !!processId && isAuthenticated,
 		staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
 		gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
 	});
 }
-
 /**
  * Mutation to start a UiPath process
  *
@@ -76,7 +71,6 @@ export function useUiPathProcess(processId: number | undefined, folderId: number
  */
 export function useStartProcess(): UseMutationResult<ProcessStartResponse[], Error, { processKey: string; folderId: number }> {
 	const queryClient = useQueryClient();
-
 	return useMutation({
 		mutationFn: async ({
 			processKey,

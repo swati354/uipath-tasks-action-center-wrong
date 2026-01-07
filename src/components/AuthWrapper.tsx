@@ -1,80 +1,85 @@
 import React, { ReactNode } from 'react';
 import { useUiPathAuth } from '@/contexts/UiPathAuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertCircle } from 'lucide-react';
-
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 interface AuthWrapperProps {
   children: ReactNode;
-  loadingMessage?: string;
-  errorTitle?: string;
 }
-
-export function AuthWrapper({ 
-  children, 
-  loadingMessage = "Connecting to UiPath Orchestrator...",
-  errorTitle = "Failed to connect to UiPath Orchestrator"
-}: AuthWrapperProps) {
-  const { isInitializing, isAuthenticated, error } = useUiPathAuth();
-
+export function AuthWrapper({ children }: AuthWrapperProps) {
+  const { isInitializing, isAuthenticated, error, retry } = useUiPathAuth();
   if (isInitializing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold">Initializing UiPath Connection</h2>
-            <p className="text-sm text-muted-foreground">
-              {loadingMessage}
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center space-x-2">
+              <Loader2 className="w-6 h-6 animate-spin text-[#FA4616]" />
+              <span>Connecting to UiPath</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-muted-foreground">
+              Initializing UiPath SDK and authenticating...
             </p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
-
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="max-w-md w-full">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="mt-2">
-              <div className="space-y-2">
-                <p className="font-medium">{errorTitle}</p>
-                <p className="text-sm">{error}</p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Please check your .env configuration and ensure your UiPath credentials are correct.
-                </p>
-              </div>
-            </AlertDescription>
-          </Alert>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center space-x-2 text-destructive">
+              <AlertCircle className="w-6 h-6" />
+              <span>Authentication Error</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <div className="text-center">
+              <Button onClick={retry} className="bg-[#FA4616] hover:bg-[#E55A1B] text-white">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Retry Connection
+              </Button>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p>Make sure you have:</p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Valid UiPath credentials</li>
+                <li>Proper OAuth configuration</li>
+                <li>Network access to UiPath Orchestrator</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
-
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="max-w-md w-full">
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="mt-2">
-              <div className="space-y-2">
-                <p className="font-medium">Authentication Required</p>
-                <p className="text-sm">
-                  Please complete the OAuth authentication flow to access UiPath Orchestrator.
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  If the authentication window doesn't open automatically, please refresh the page.
-                </p>
-              </div>
-            </AlertDescription>
-          </Alert>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle>UiPath Authentication Required</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-center">
+            <p className="text-muted-foreground">
+              Please authenticate with UiPath Orchestrator to continue.
+            </p>
+            <Button onClick={retry} className="bg-[#FA4616] hover:bg-[#E55A1B] text-white">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Authenticate
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
-
   return <>{children}</>;
 }

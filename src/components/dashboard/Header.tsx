@@ -2,9 +2,9 @@ import React from 'react';
 import { Activity, Wifi, WifiOff } from 'lucide-react';
 import { FolderSelector } from './FolderSelector';
 import { Badge } from '@/components/ui/badge';
+import { useUiPathAuth } from '@/contexts/UiPathAuthContext';
 export function Header() {
-  // In a real implementation, this would come from authentication context
-  const isConnected = true;
+  const { isAuthenticated } = useUiPathAuth();
   return (
     <header className="border-b bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,7 +29,7 @@ export function Header() {
           <div className="flex items-center space-x-4">
             <FolderSelector />
             <div className="flex items-center space-x-2">
-              {isConnected ? (
+              {isAuthenticated ? (
                 <>
                   <Wifi className="w-4 h-4 text-green-600" />
                   <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">

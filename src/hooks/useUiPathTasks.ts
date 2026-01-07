@@ -6,12 +6,11 @@
  * - Assign tasks to users
  * - Complete tasks
  */
-
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import { getUiPath } from '../lib/uipath';
+import { useUiPathAuth } from '@/contexts/UiPathAuthContext';
 import { toast } from 'sonner';
 import type { RawTaskGetResponse, TaskAssignmentResponse, TaskType } from 'uipath-sdk';
-
 /**
  * Fetch all UiPath tasks
  *
@@ -19,15 +18,14 @@ import type { RawTaskGetResponse, TaskAssignmentResponse, TaskType } from 'uipat
  * @param enabled - Whether to enable the query (default: true)
  */
 export function useUiPathTasks(folderId?: number, enabled = true): UseQueryResult<RawTaskGetResponse[], Error> {
+	const { isAuthenticated } = useUiPathAuth();
 	return useQuery({
 		queryKey: ['uipath', 'tasks', folderId],
 		queryFn: async (): Promise<RawTaskGetResponse[]> => {
 			const uipath = getUiPath();
-			
 			if (!uipath.isAuthenticated()) {
 				throw new Error('Not authenticated. Please complete the authentication flow.');
 			}
-			
 			const result = await uipath.tasks.getAll(
 				folderId ? { folderId } : undefined
 			);
@@ -37,18 +35,16 @@ export function useUiPathTasks(folderId?: number, enabled = true): UseQueryResul
 			}
 			return (result as any).items || [];
 		},
-		enabled: enabled,
+		enabled: enabled && isAuthenticated,
 		staleTime: 1 * 60 * 1000, // Consider data fresh for 1 minute
 		gcTime: 3 * 60 * 1000, // Keep in cache for 3 minutes
 	});
 }
-
 /**
  * Mutation to assign a task to a user
  */
 export function useAssignTask(): UseMutationResult<TaskAssignmentResponse[], Error, { taskId: number; userNameOrEmail: string }> {
 	const queryClient = useQueryClient();
-
 	return useMutation({
 		mutationFn: async ({
 			taskId,
@@ -58,11 +54,9 @@ export function useAssignTask(): UseMutationResult<TaskAssignmentResponse[], Err
 			userNameOrEmail: string;
 		}): Promise<TaskAssignmentResponse[]> => {
 			const uipath = getUiPath();
-			
 			if (!uipath.isAuthenticated()) {
 				throw new Error('UiPath SDK not authenticated. Please authenticate first.');
 			}
-			
 			const result = await uipath.tasks.assign({ taskId, userNameOrEmail });
 			// SDK returns OperationResponse with data field containing array
 			return result.data as TaskAssignmentResponse[];
@@ -76,7 +70,6 @@ export function useAssignTask(): UseMutationResult<TaskAssignmentResponse[], Err
 		},
 	});
 }
-
 /**
  * Mutation to complete a task
  *
@@ -112,7 +105,6 @@ export function useCompleteTask(): UseMutationResult<
 	| { taskId: number; type: TaskType.App | TaskType.Form; data: Record<string, unknown>; action: string; folderId: number }
 > {
 	const queryClient = useQueryClient();
-
 	return useMutation({
 		mutationFn: async (params:
 			| { taskId: number; type: TaskType.External; data?: Record<string, unknown>; action?: string; folderId: number }
@@ -120,11 +112,9 @@ export function useCompleteTask(): UseMutationResult<
 		): Promise<void> => {
 			const { taskId, type, folderId, data, action } = params;
 			const uipath = getUiPath();
-			
 			if (!uipath.isAuthenticated()) {
 				throw new Error('UiPath SDK not authenticated. Please authenticate first.');
 			}
-
 			await uipath.tasks.complete(
 				{
 					type,
