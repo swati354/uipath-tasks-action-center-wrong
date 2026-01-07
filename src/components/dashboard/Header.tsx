@@ -1,6 +1,5 @@
 import React from 'react';
 import { Activity, Wifi, WifiOff } from 'lucide-react';
-import { FolderSelector } from './FolderSelector';
 import { Badge } from '@/components/ui/badge';
 import { useUiPathAuth } from '@/contexts/UiPathAuthContext';
 export function Header() {
@@ -25,9 +24,8 @@ export function Header() {
               </div>
             </div>
           </div>
-          {/* Connection Status and Folder Selector */}
+          {/* Connection Status */}
           <div className="flex items-center space-x-4">
-            <FolderSelector />
             <div className="flex items-center space-x-2">
               {isAuthenticated ? (
                 <>

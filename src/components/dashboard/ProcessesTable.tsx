@@ -7,24 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useUiPathProcesses, useStartProcess } from '@/hooks/useUiPathProcesses';
-import { useFolderContext } from '@/hooks/useFolderContext';
 import { StatusBadge } from './StatusBadge';
 import { StartProcessDialog } from './StartProcessDialog';
 import { format } from 'date-fns';
 export function ProcessesTable() {
-  const { selectedFolderId } = useFolderContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedProcess, setSelectedProcess] = useState<any>(null);
   const [showStartDialog, setShowStartDialog] = useState(false);
-  const { data: processes, isLoading, error, refetch } = useUiPathProcesses(selectedFolderId, true);
+  const { data: processes, isLoading, error, refetch } = useUiPathProcesses(undefined, true);
   const startProcess = useStartProcess();
   const filteredProcesses = useMemo(() => {
     if (!processes) return [];
     return processes.filter(process => {
       const matchesSearch = process.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            process.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || process.isActive === (statusFilter === 'active');
+      const matchesStatus = statusFilter === 'all' || process.isLatestVersion === (statusFilter === 'active');
       return matchesSearch && matchesStatus;
     });
   }, [processes, searchTerm, statusFilter]);
@@ -36,7 +34,7 @@ export function ProcessesTable() {
     try {
       await startProcess.mutateAsync({
         processKey,
-        folderId: selectedFolderId || 0
+        folderId: 0
       });
       setShowStartDialog(false);
       setSelectedProcess(null);
@@ -112,8 +110,8 @@ export function ProcessesTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="active">Latest Version</SelectItem>
+                <SelectItem value="inactive">Older Version</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -121,8 +119,8 @@ export function ProcessesTable() {
           {filteredProcesses.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'No processes match your filters' 
+                {searchTerm || statusFilter !== 'all'
+                  ? 'No processes match your filters'
                   : 'No processes found. Create processes in UiPath Orchestrator to see them here.'}
               </p>
             </div>
@@ -150,17 +148,17 @@ export function ProcessesTable() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {process.processVersion || 'N/A'}
+                          {process.version || 'N/A'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <StatusBadge 
-                          status={process.isActive ? 'success' : 'secondary'}
-                          text={process.isActive ? 'Active' : 'Inactive'}
+                        <StatusBadge
+                          status={process.isLatestVersion ? 'success' : 'secondary'}
+                          text={process.isLatestVersion ? 'Latest' : 'Older Version'}
                         />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {process.lastModifiedTime 
+                        {process.lastModifiedTime
                           ? format(new Date(process.lastModifiedTime), 'MMM d, yyyy HH:mm')
                           : 'N/A'
                         }
@@ -169,7 +167,7 @@ export function ProcessesTable() {
                         <Button
                           size="sm"
                           onClick={() => handleStartProcess(process)}
-                          disabled={!process.isActive || startProcess.isPending}
+                          disabled={!process.isLatestVersion || startProcess.isPending}
                           className="bg-[#FA4616] hover:bg-[#E55A1B] text-white"
                         >
                           <Play className="w-4 h-4 mr-1" />

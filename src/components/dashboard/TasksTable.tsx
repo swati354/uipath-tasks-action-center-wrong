@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useUiPathTasks, useAssignTask, useCompleteTask } from '@/hooks/useUiPathTasks';
-import { useFolderContext } from '@/hooks/useFolderContext';
 import { StatusBadge } from './StatusBadge';
 import { CompleteTaskForm } from './CompleteTaskForm';
 import { format } from 'date-fns';
@@ -53,20 +52,19 @@ const getStatusColor = (status: string) => {
   }
 };
 export function TasksTable() {
-  const { selectedFolderId } = useFolderContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCompleteForm, setShowCompleteForm] = useState(false);
-  const { data: tasks, isLoading, error, refetch } = useUiPathTasks(selectedFolderId, true);
+  const { data: tasks, isLoading, error, refetch } = useUiPathTasks(undefined, true);
   const assignTask = useAssignTask();
   const completeTask = useCompleteTask();
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
     return tasks.filter(task => {
       const matchesSearch = task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           task.description?.toLowerCase().includes(searchTerm.toLowerCase());
+                           task.data?.description?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || task.status?.toLowerCase() === statusFilter.toLowerCase();
       const matchesPriority = priorityFilter === 'all' || task.priority?.toLowerCase() === priorityFilter.toLowerCase();
       return matchesSearch && matchesStatus && matchesPriority;
@@ -93,7 +91,7 @@ export function TasksTable() {
         type: TaskType.External, // Default to External, real app would determine from task
         data,
         action,
-        folderId: selectedFolderId || 0
+        folderId: 0
       });
       setShowCompleteForm(false);
       setSelectedTask(null);
@@ -191,7 +189,7 @@ export function TasksTable() {
             <div className="text-center py-12">
               <p className="text-muted-foreground">
                 {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all'
-                  ? 'No tasks match your filters' 
+                  ? 'No tasks match your filters'
                   : 'No tasks found. Create tasks in UiPath Action Center to see them here.'}
               </p>
             </div>
@@ -214,16 +212,16 @@ export function TasksTable() {
                       <TableCell>
                         <div>
                           <div className="font-medium">{task.title}</div>
-                          {task.description && (
+                          {task.data?.description && (
                             <div className="text-sm text-muted-foreground max-w-xs truncate">
-                              {task.description}
+                              {task.data.description}
                             </div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={getPriorityColor(task.priority || 'medium')}
                         >
                           <span className="flex items-center space-x-1">
@@ -235,30 +233,30 @@ export function TasksTable() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <StatusBadge 
+                        <StatusBadge
                           status={getStatusColor(task.status || 'pending')}
                           text={task.status || 'Pending'}
                         />
                       </TableCell>
                       <TableCell>
-                        {task.assignee ? (
+                        {task.assignedToUser ? (
                           <div className="flex items-center space-x-2">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm">{task.assignee}</span>
+                            <span className="text-sm">{task.assignedToUser}</span>
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-sm">Unassigned</span>
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {task.dueDate 
+                        {task.dueDate
                           ? format(new Date(task.dueDate), 'MMM d, yyyy')
                           : 'No due date'
                         }
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          {!task.assignee && (
+                          {!task.assignedToUser && (
                             <Button
                               size="sm"
                               variant="outline"
