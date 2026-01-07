@@ -2,7 +2,7 @@
 
 A comprehensive enterprise dashboard for UiPath automation management with three main components: Processes View, Assets View, and Action Center Tasks View. Built with React, TypeScript, and the UiPath SDK for seamless integration with UiPath Orchestrator.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/swati354/uipath-tasks-action-center-wrong)
 
 ## Features
 
@@ -136,7 +136,7 @@ The application follows a modern React architecture with:
 
 ### Cloudflare Pages
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/swati354/uipath-tasks-action-center-wrong)
 
 1. Build the application:
 ```bash
